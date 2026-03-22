@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Sudarshan Life Dashboard</title>
+  <style>
+    body { background: #0a0a0f; color: white; font-family: Arial; text-align: center; padding: 40px; }
+    h1 { color: #4f8eff; font-size: 28px; }
+    p { color: #888; font-size: 14px; }
+    button { background: #4f8eff; color: white; border: none; padding: 12px 24px; border-radius: 8px; font-size: 14px; cursor: pointer; margin: 8px; }
+    .logout { background: #ff5f7e; }
+    input { padding: 12px; border-radius: 8px; border: 1px solid #333; background: #1a1a2e; color: white; font-size: 14px; width: 220px; margin: 6px; }
+    select { padding: 12px; border-radius: 8px; border: 1px solid #333; background: #1a1a2e; color: white; font-size: 14px; margin: 6px; }
+    .item { background: #1a1a2e; border: 1px solid #222; border-radius: 8px; padding: 12px 16px; margin: 8px auto; max-width: 420px; display: flex; justify-content: space-between; align-items: center; }
+    #total { font-size: 22px; color: #00e5a0; margin: 16px 0; font-weight: bold; }
+    #user-info { color: #888; font-size: 13px; margin-bottom: 16px; }
+    #login-section { display: block; }
+    #app-section { display: none; }
+    .inc { color: #00e5a0; }
+    .exp { color: #ff5f7e; }
+  </style>
+</head>
+<body>
+  <div id="login-section">
+    <h1>Sudarshan Life Dashboard</h1>
+    <p>Sign in with Google to sync your data across all devices</p>
+    <br/>
+    <button onclick="signIn()">Sign in with Google</button>
+  </div>
+  <div id="app-section">
+    <h1>Expense Tracker</h1>
+    <div id="user-info"></div>
+    <button class="logout" onclick="doSignOut()">Sign Out</button>
+    <br/><br/>
+    <select id="entryType">
+      <option value="income">Income</option>
+      <option value="expense">Expense</option>
+    </select>
+    <input type="text" id="desc" placeholder="Description" />
+    <input type="number" id="amt" placeholder="Amount (Rs.)" />
+    <br/>
+    <button onclick="addEntry()">Add Entry</button>
+    <div id="total">Balance: Rs.0</div>
+    <div id="list"></div>
+  </div>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-app.js";
+    import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-auth.js";
+    import { getDatabase, ref, push, onValue } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-database.js";
+    const app = initializeApp({
+      apiKey: "AIzaSyBmEkbho4Dugkb8czvRB52Q-RUzjLL3Ry4",
+      authDomain: "sudarshan-life-dashboard.firebaseapp.com",
+      projectId: "sudarshan-life-dashboard",
+      storageBucket: "sudarshan-life-dashboard.firebasestorage.app",
+      messagingSenderId: "1073446872543",
+      appId: "1:1073446872543:web:2c914bcc96f60a5e8f906a",
+      databaseURL: "https://sudarshan-life-dashboard-default-rtdb.asia-southeast1.firebasedatabase.app"
+    });
+    const auth = getAuth(app);
+    const db = getDatabase(app);
+    let user = null;
+    window.signIn = () => signInWithPopup(auth, new GoogleAuthProvider());
+    window.doSignOut = () => signOut(auth);
+    window.addEntry = () => {
+      const desc = document.getElementById('desc').value.trim();
+      const amt = parseFloat(document.getElementById('amt').value);
+      const type = document.getElementById('entryType').value;
+      if(!desc || !amt) return alert('Fill all fields');
+      push(ref(db, 'users/' + user.uid + '/expenses'), {
+        desc, amt, type,
+        date: new Date().toLocaleDateString('en-IN'),
+        time: new Date().toLocaleTimeString('en-IN', {hour:'2-digit', minute:'2-digit'})
+      });
+      document.getElementById('desc').value = '';
+      document.getElementById('amt').value = '';
+    };
+    onAuthStateChanged(auth, (u) => {
+      user = u;
+      if(u) {
+        document.getElementById('login-section').style.display = 'none';
+        document.getElementById('app-section').style.display = 'block';
+        document.getElementById('user-info').textContent = 'Hi ' + u.displayName;
+        onValue(ref(db, 'users/' + u.uid + '/expenses'), (snap) => {
+          const data = snap.val();
+          let income = 0, expense = 0, html = '';
+          if(data) {
+            Object.entries(data).reverse().forEach(([k, v]) => {
+              if(v.type === 'income') income += v.amt;
+              else expense += v.amt;
+              html += '<div class="item"><span>' + v.desc + ' (' + v.date + ')</span><span class="' + (v.type === 'income' ? 'inc' : 'exp') + '">' + (v.type === 'income' ? '+' : '-') + 'Rs.' + v.amt + '</span></div>';
+            });
+          }
+          const bal = income - expense;
+          document.getElementById('total').textContent = 'Balance: Rs.' + bal + ' | Income: Rs.' + income + ' | Spent: Rs.' + expense;
+          document.getElementById('list').innerHTML = html || '<p style="color:#888">No entries yet. Add your first one!</p>';
+        });
+      } else {
+        document.getElementById('login-section').style.display = 'block';
+        document.getElementById('app-section').style.display = 'none';
+      }
+    });
+  </script>
+</body>
+</html>
