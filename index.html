@@ -151,7 +151,8 @@ body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(
         <div id="dMsg" style="font-size:12px;color:var(--m);margin-top:4px">Log your day to build your score</div></div>
       <div id="sBrk" style="display:flex;gap:16px;flex-wrap:wrap"></div>
     </div>
-    <div id="nav" style="display:flex;gap:6px;margin-bottom:24px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none"></div>
+    <div id="nav" style="display:flex;gap:6px;margin-bottom:24px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none">
+    </div>
     <div id="panels"></div>
     <div style="text-align:center;padding:32px 0 16px;border-top:1px solid var(--b);margin-top:40px">
       <div style="font-family:'Unbounded',sans-serif;font-size:0.6rem;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--m);margin-bottom:6px">Life Track · Personal Dashboard</div>
@@ -323,8 +324,26 @@ function startDash(){
 }
 function save(){if(uid&&S)set(ref(db,'users/'+uid+'/data'),S);}
 const MINFO={money:{icon:'💰',label:'Money'},food:{icon:'🍱',label:'Food'},routine:{icon:'✅',label:'Habits'},study:{icon:'📚',label:'Study'},work:{icon:'💼',label:'Work'},fitness:{icon:'🏋️',label:'Fitness'},goals:{icon:'🎯',label:'Goals'},mood:{icon:'😌',label:'Mood'}};
+const ICONS={
+  money:`<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8"/><path d="M12 6v2m0 8v2"/></svg>`,
+  food:`<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"/><path d="M7 2v20"/><path d="M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3zm0 0v7"/></svg>`,
+  routine:`<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>`,
+  study:`<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>`,
+  work:`<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"/></svg>`,
+  fitness:`<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>`,
+  goals:`<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg>`,
+  mood:`<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg>`,
+  settings:`<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>`,
+};
+const MINFO={
+  money:{icon:ICONS.money,label:'Money'},food:{icon:ICONS.food,label:'Food'},
+  routine:{icon:ICONS.routine,label:'Habits'},study:{icon:ICONS.study,label:'Study'},
+  work:{icon:ICONS.work,label:'Work'},fitness:{icon:ICONS.fitness,label:'Fitness'},
+  goals:{icon:ICONS.goals,label:'Goals'},mood:{icon:ICONS.mood,label:'Mood'}
+};
 function buildNav(){
-  $('nav').innerHTML=CFG.mods.map((m,i)=>`<button class="nb ${i===0?'on':''}" data-t="${m}" onclick="swTab('${m}',this)">${MINFO[m].icon} ${MINFO[m].label}</button>`).join('');
+  $('nav').innerHTML=CFG.mods.map((m,i)=>`<button class="nb ${i===0?'on':''}" data-t="${m}" onclick="swTab('${m}',this)" style="display:flex;align-items:center;gap:6px">${ICONS[m]||''} ${MINFO[m].label}</button>`).join('')
+    +`<button class="nb" data-t="settings" onclick="swTab('settings',this)" style="margin-left:4px;display:flex;align-items:center;gap:6px">${ICONS.settings} Settings</button>`;
 }
 window.swTab=function(tab,el){
   document.querySelectorAll('.pn').forEach(p=>p.classList.remove('on'));
@@ -334,8 +353,9 @@ window.swTab=function(tab,el){
   if(tab==='money')setTimeout(rSpend,100);
 };
 function buildPanels(){
-  $('panels').innerHTML=CFG.mods.map((m,i)=>`<div class="pn ${i===0?'on':''}" id="p-${m}">${getPH(m)}</div>`).join('');
-  $('sBrk').innerHTML=CFG.mods.filter(m=>m!=='study').map(m=>`<div style="text-align:center"><div id="sc-${m}" style="font-family:'Unbounded',sans-serif;font-size:1rem;font-weight:700">-</div><div style="font-size:11px;color:var(--m);margin-top:2px">${MINFO[m].icon} ${m}</div></div>`).join('');
+  $('panels').innerHTML=CFG.mods.map((m,i)=>`<div class="pn ${i===0?'on':''}" id="p-${m}">${getPH(m)}</div>`).join('')
+    +`<div class="pn" id="p-settings">${getSettingsHTML()}</div>`;
+  $('sBrk').innerHTML=CFG.mods.filter(m=>m!=='study').map(m=>`<div style="text-align:center"><div id="sc-${m}" style="font-family:'Unbounded',sans-serif;font-size:1rem;font-weight:700">-</div><div style="font-size:11px;color:var(--m);margin-top:2px;display:flex;align-items:center;justify-content:center;gap:4px">${ICONS[m]||''} ${MINFO[m].label}</div></div>`).join('');
 }
 function getPH(m){
   if(m==='money')return`<div class="g4"><div class="sc cg"><div class="sl">Income</div><div class="sv" id="mi">₹0</div></div><div class="sc cr"><div class="sl">Spent</div><div class="sv" id="me">₹0</div></div><div class="sc cb"><div class="sl">Balance</div><div class="sv" id="mb_">₹0</div></div><div class="sc co"><div class="sl">Budget Used</div><div class="sv" id="mbu">--</div><div class="ss">${CFG.budget>0?'of ₹'+CFG.budget:''}</div></div></div><div class="fc"><div class="fch"><div class="fct">📊 Spending</div></div><div class="cw"><canvas id="spC"></canvas></div></div><div class="fmc"><div class="fmt">➕ Add Entry</div><div class="tr"><button class="tp inc" id="bI" onclick="sType('income')">⬆ Income</button><button class="tp" id="bE" onclick="sType('expense')">⬇ Expense</button></div><div class="fr"><input type="text" id="mD" placeholder="Description"/><input type="number" id="mA" placeholder="Amount ₹" style="max-width:130px"/></div><div class="fr"><select id="mC"><option>Food</option><option>Transport</option><option>Stationery</option><option>Entertainment</option><option>Income</option><option>Freelance</option><option>Business</option><option>Other</option></select></div><button class="ab ag" onclick="addM()">Add Entry</button></div><div class="sl_">Today's Log</div><div class="ll" id="mLog"><div class="em"><div class="ei">💸</div>No entries yet</div></div>`;
@@ -408,6 +428,37 @@ window.addMk=async function(){const sh=$('sSel').value,sc=parseFloat($('sSc').va
 let stCh;
 function rSChart(){const ctx=$('stC');if(!ctx)return;if(stCh)stCh.destroy();const subs=CFG.subs||[];if(!subs.length)return;const L=subs.map(s=>s.short),D=subs.map(s=>gAvg(s.marks)||0);stCh=new Chart(ctx.getContext('2d'),{type:'bar',data:{labels:L,datasets:[{data:D,backgroundColor:D.map(d=>d>=60?'rgba(0,229,160,0.8)':d>=45?'rgba(255,179,64,0.8)':'rgba(255,95,126,0.8)'),borderRadius:8,borderWidth:0}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,max:100,grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#5a6480',font:{size:11}}},x:{grid:{display:false},ticks:{color:'#5a6480',font:{size:11,weight:'600'}}}}}});}
 function renderAll(){rMoney();rFood();rRoutine();rGoals();rWork();rFitness();rMood();if(CFG.mods.includes('study')){rStudy();setTimeout(rSChart,200);}setTimeout(rSpend,200);calcScore();}
+// SETTINGS HTML
+function getSettingsHTML(){return`<div style="max-width:560px"><div style="font-family:'Unbounded',sans-serif;font-size:1.1rem;font-weight:800;margin-bottom:4px">⚙️ Settings</div><div style="font-size:13px;color:var(--m);margin-bottom:24px">Customise your dashboard anytime</div><div class="fmc"><div class="fmt">👤 Profile</div><label class="ol" style="display:block;margin-bottom:6px">Your Name</label><input type="text" id="stName" placeholder="Your name" style="margin-bottom:12px"/><label class="ol" style="display:block;margin-bottom:6px">Who are you?</label><div class="tgrid" id="stTypeGrid" style="margin-bottom:12px"><div class="tcard" data-tp="student" onclick="stPT('student',this)"><div class="ti">🎓</div><div class="tl">Student</div></div><div class="tcard" data-tp="professional" onclick="stPT('professional',this)"><div class="ti">💼</div><div class="tl">Professional</div></div><div class="tcard" data-tp="business" onclick="stPT('business',this)"><div class="ti">🏢</div><div class="tl">Business</div></div><div class="tcard" data-tp="personal" onclick="stPT('personal',this)"><div class="ti">🌱</div><div class="tl">Personal</div></div></div><button class="ab al" onclick="savePro()">Save Profile</button></div><div class="fmc"><div class="fmt">📊 Active Modules</div><div style="font-size:12px;color:var(--m);margin-bottom:12px">Money, Habits & Goals are always on.</div><div class="mgrid" id="stModGrid"></div><button class="ab ag" onclick="saveMods()">Save Modules</button></div><div class="fmc"><div class="fmt">🎯 Targets</div><label class="ol" style="display:block;margin-bottom:6px">Monthly Budget (₹)</label><input type="number" id="stBgt" placeholder="e.g. 8000" style="margin-bottom:12px"/><label class="ol" style="display:block;margin-bottom:6px">Daily Calorie Goal</label><input type="number" id="stCal" placeholder="e.g. 2000" style="margin-bottom:12px"/><button class="ab ao" onclick="saveTgts()">Save Targets</button></div><div class="fmc" id="stStudySec"><div class="fmt">📚 Subjects & Attendance</div><div class="slist" id="stSubList"></div><div class="sarow" style="margin-top:8px"><input type="text" class="oi" id="stSubN" placeholder="Subject name" style="margin-bottom:0"/><input type="text" class="oi" id="stSubC" placeholder="Short" style="margin-bottom:0;max-width:80px"/><button onclick="stAS()" style="background:var(--c1);border:none;border-radius:10px;padding:11px 14px;color:white;font-weight:700;cursor:pointer;flex-shrink:0">+</button></div><div style="font-size:12px;color:var(--m);margin:12px 0 8px">Update attendance below</div><div id="stAttList"></div><button class="ab ap" onclick="saveSubj()" style="margin-top:12px">Save Subjects</button></div><div class="fmc" style="border-color:rgba(255,95,126,0.3)"><div class="fmt" style="color:var(--c2)">⚠️ Reset</div><button class="ab ar" onclick="resetOb()">Redo Setup from Scratch</button></div></div>`;}
+
+function loadSettingsValues(){
+  const sn=$('stName');if(sn)sn.value=CFG.name||'';
+  document.querySelectorAll('#stTypeGrid .tcard').forEach(c=>{c.classList.remove('sel');if(c.dataset.tp===CFG.type)c.classList.add('sel');});
+  const sb=$('stBgt');if(sb)sb.value=CFG.budget||'';
+  const sc=$('stCal');if(sc)sc.value=CFG.cal||2000;
+  const mg=$('stModGrid');
+  if(mg){const OPT=[{id:'food',icon:'🍱',label:'Food'},{id:'study',icon:'📚',label:'Study'},{id:'work',icon:'💼',label:'Work'},{id:'fitness',icon:'🏋️',label:'Fitness'},{id:'mood',icon:'😌',label:'Mood'}];mg.innerHTML=OPT.map(m=>`<div class="mcard ${CFG.mods.includes(m.id)?'sel':''}" data-mod="${m.id}" onclick="this.classList.toggle('sel');this.querySelector('.mck').textContent=this.classList.contains('sel')?'✓':''"><div class="mck">${CFG.mods.includes(m.id)?'✓':''}</div><div class="mi">${m.icon}</div><div class="ml">${m.label}</div></div>`).join('');}
+  const ss=$('stStudySec');if(ss)ss.style.display=CFG.mods.includes('study')?'block':'none';
+  stRSubs();stRAtt();
+}
+window.stPT=function(t,el){document.querySelectorAll('#stTypeGrid .tcard').forEach(c=>c.classList.remove('sel'));el.classList.add('sel');};
+function stRSubs(){const l=$('stSubList');if(!l)return;if(!(CFG.subs||[]).length){l.innerHTML='<p style="color:var(--m);font-size:12px;padding:8px">No subjects yet</p>';return;}l.innerHTML=(CFG.subs||[]).map((s,i)=>`<div class="sitem"><span>${s.name} (${s.short})</span><button onclick="stRS(${i})" style="background:none;border:none;color:var(--c2);cursor:pointer">✕</button></div>`).join('');}
+function stRAtt(){const l=$('stAttList');if(!l)return;l.innerHTML=(CFG.subs||[]).map((s,i)=>`<div style="background:var(--s);border:1px solid var(--b);border-radius:10px;padding:12px;margin-bottom:8px"><div style="font-weight:600;font-size:13px;margin-bottom:8px">${s.short} — ${s.name}</div><div style="display:flex;gap:8px;align-items:center"><input type="number" id="aa${i}" value="${s.attendance?.attended||0}" style="max-width:90px" placeholder="Attended"/><span style="color:var(--m);font-size:12px">of</span><input type="number" id="at${i}" value="${s.attendance?.total||0}" style="max-width:90px" placeholder="Total"/></div></div>`).join('');}
+window.stAS=function(){const n=$('stSubN').value.trim(),c=$('stSubC').value.trim().toUpperCase();if(!n||!c)return alert('Enter name and short code');if(!CFG.subs)CFG.subs=[];CFG.subs.push({name:n,short:c,credits:3,marks:[],attendance:{attended:0,total:0}});$('stSubN').value='';$('stSubC').value='';stRSubs();stRAtt();};
+window.stRS=function(i){CFG.subs.splice(i,1);stRSubs();stRAtt();};
+window.savePro=async function(){const n=$('stName').value.trim();if(!n)return alert('Enter your name');const sel=document.querySelector('#stTypeGrid .tcard.sel');const t=sel?sel.dataset.tp:CFG.type;CFG.name=n;CFG.type=t;await set(ref(db,'users/'+uid+'/config'),CFG);$('dName').textContent=CFG.name.toUpperCase()+"'S DASHBOARD";$('uName').textContent=CFG.name;$('uAvt').textContent=CFG.name.charAt(0).toUpperCase();alert('Profile saved ✅');};
+window.saveMods=async function(){const always=['money','routine','goals'];const sel=Array.from(document.querySelectorAll('#stModGrid .mcard.sel')).map(c=>c.dataset.mod);CFG.mods=[...always,...sel.filter(m=>!always.includes(m))];await set(ref(db,'users/'+uid+'/config'),CFG);buildNav();buildPanels();alert('Modules saved ✅');};
+window.saveTgts=async function(){CFG.budget=parseFloat($('stBgt').value)||0;CFG.cal=parseInt($('stCal').value)||2000;await set(ref(db,'users/'+uid+'/config'),CFG);alert('Targets saved ✅');};
+window.saveSubj=async function(){(CFG.subs||[]).forEach((s,i)=>{const a=$('aa'+i),t=$('at'+i);if(a&&t)s.attendance={attended:parseInt(a.value)||0,total:parseInt(t.value)||0};});await set(ref(db,'users/'+uid+'/config'),CFG);rStudy();alert('Subjects saved ✅');};
+window.resetOb=async function(){if(!confirm('This resets your setup. Your data stays. Continue?'))return;await set(ref(db,'users/'+uid+'/config'),null);CFG=null;OB.init();show('O');gS(0);};
+window.swTab=function(tab,el){
+  document.querySelectorAll('.pn').forEach(p=>p.classList.remove('on'));
+  document.querySelectorAll('.nb').forEach(b=>b.classList.remove('on'));
+  const panel=$('p-'+tab);if(panel){panel.classList.add('on');el.classList.add('on');}
+  if(tab==='settings'){loadSettingsValues();return;}
+  if(tab==='study'){rStudy();setTimeout(rSChart,100);}
+  if(tab==='money')setTimeout(rSpend,100);
+};
 </script>
 <script>
 // Register Service Worker for PWA
