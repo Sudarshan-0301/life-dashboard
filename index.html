@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sudarshan's Life Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@400;600;700;900&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#080b14;--surface:#0f1523;--surface2:#161d2e;--border:rgba(255,255,255,0.06);--text:#e8ecf4;--muted:#5a6480;--c1:#4f8eff;--c2:#ff5f7e;--c3:#00e5a0;--c4:#ffb340;--c5:#bf7fff;--c1g:rgba(79,142,255,0.15);--c2g:rgba(255,95,126,0.15);--c3g:rgba(0,229,160,0.15);--c4g:rgba(255,179,64,0.15);--c5g:rgba(191,127,255,0.15)}
+html{scroll-behavior:smooth}
+body{background:var(--bg);color:var(--text);font-family:'Plus Jakarta Sans',sans-serif;min-height:100vh;overflow-x:hidden}
+body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(79,142,255,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(79,142,255,0.03) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0}
+body::after{content:'';position:fixed;top:-200px;left:-200px;width:600px;height:600px;background:radial-gradient(circle,rgba(79,142,255,0.08) 0%,transparent 70%);pointer-events:none;z-index:0;animation:drift 20s ease-in-out infinite alternate}
+@keyframes drift{to{transform:translate(100px,150px)}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+.app{position:relative;z-index:1;max-width:900px;margin:0 auto;padding:0 16px 80px}
+.header{padding:32px 0 24px;display:flex;justify-content:space-between;align-items:center;animation:fadeUp 0.6s ease both}
+.header-brand h1{font-family:'Unbounded',sans-serif;font-size:clamp(1.2rem,4vw,1.6rem);font-weight:900;letter-spacing:-0.03em;line-height:1}
+.header-brand h1 span{background:linear-gradient(135deg,var(--c1),var(--c5));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.time-display{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:8px 14px;font-size:12px;color:var(--muted);font-weight:500}
+.time-display span{color:var(--c3);font-weight:600}
+.login-banner{background:linear-gradient(135deg,rgba(79,142,255,0.1),rgba(191,127,255,0.08));border:1px solid rgba(79,142,255,0.2);border-radius:20px;padding:40px 32px;text-align:center;margin-bottom:24px}
+.login-banner h2{font-family:'Unbounded',sans-serif;font-size:1.3rem;margin-bottom:12px}
+.login-banner p{color:var(--muted);font-size:14px;margin-bottom:28px}
+.btn-google{background:white;color:#333;border:none;padding:13px 28px;border-radius:10px;font-family:'Plus Jakarta Sans',sans-serif;font-size:14px;font-weight:600;cursor:pointer;display:inline-flex;align-items:center;gap:10px;transition:opacity 0.2s}
+.btn-google:hover{opacity:0.9}
+.user-bar{display:flex;justify-content:space-between;align-items:center;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:10px 16px;margin-bottom:16px;font-size:13px}
+.user-bar span{color:var(--muted)}.user-bar strong{color:var(--c3)}
+.btn-signout{background:var(--c2);color:#fff;border:none;padding:8px 16px;border-radius:8px;font-family:'Plus Jakarta Sans',sans-serif;font-size:12px;font-weight:600;cursor:pointer}
+.score-banner{background:linear-gradient(135deg,rgba(79,142,255,0.1),rgba(191,127,255,0.08));border:1px solid rgba(79,142,255,0.2);border-radius:20px;padding:20px 24px;display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;flex-wrap:wrap;gap:16px}
+.score-left h2{font-family:'Unbounded',sans-serif;font-size:0.75rem;font-weight:600;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);margin-bottom:4px}
+.day-score{font-family:'Unbounded',sans-serif;font-size:2.5rem;font-weight:900;background:linear-gradient(135deg,var(--c1),var(--c5));-webkit-background-clip:text;-webkit-text-fill-color:transparent;line-height:1}
+.score-breakdown{display:flex;gap:20px;flex-wrap:wrap}
+.score-item{text-align:center}
+.score-item .si-val{font-family:'Unbounded',sans-serif;font-size:1.1rem;font-weight:700}
+.score-item .si-label{font-size:11px;color:var(--muted);margin-top:2px}
+.nav{display:flex;gap:6px;margin-bottom:24px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none}
+.nav::-webkit-scrollbar{display:none}
+.nav-btn{display:flex;align-items:center;gap:7px;padding:10px 18px;border-radius:12px;border:1px solid var(--border);background:var(--surface);color:var(--muted);font-family:'Plus Jakarta Sans',sans-serif;font-size:13px;font-weight:600;cursor:pointer;transition:all 0.2s;white-space:nowrap;flex-shrink:0}
+.nav-btn:hover{border-color:rgba(255,255,255,0.12);color:var(--text)}
+.nav-btn[data-tab="money"].active{background:var(--c3g);border-color:rgba(0,229,160,0.3);color:var(--c3)}
+.nav-btn[data-tab="food"].active{background:var(--c4g);border-color:rgba(255,179,64,0.3);color:var(--c4)}
+.nav-btn[data-tab="routine"].active{background:var(--c1g);border-color:rgba(79,142,255,0.3);color:var(--c1)}
+.nav-btn[data-tab="study"].active{background:var(--c5g);border-color:rgba(191,127,255,0.3);color:var(--c5)}
+.nav-btn[data-tab="goals"].active{background:var(--c2g);border-color:rgba(255,95,126,0.3);color:var(--c2)}
+.panel{display:none;animation:fadeUp 0.4s ease both}.panel.active{display:block}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px}
+.grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px}
+.grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px}
+@media(max-width:500px){.grid-3{grid-template-columns:1fr 1fr}.grid-4{grid-template-columns:1fr 1fr}}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:18px;transition:transform 0.2s}
+.stat-card:hover{transform:translateY(-2px)}
+.stat-card .sc-label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.07em;color:var(--muted);margin-bottom:8px}
+.stat-card .sc-val{font-family:'Unbounded',sans-serif;font-size:1.5rem;font-weight:700;line-height:1}
+.stat-card .sc-sub{font-size:12px;color:var(--muted);margin-top:4px}
+.c-green .sc-val{color:var(--c3)}.c-red .sc-val{color:var(--c2)}.c-blue .sc-val{color:var(--c1)}.c-orange .sc-val{color:var(--c4)}.c-purple .sc-val{color:var(--c5)}
+.full-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:20px;margin-bottom:16px}
+.full-card .fc-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
+.full-card .fc-title{font-family:'Unbounded',sans-serif;font-size:0.8rem;font-weight:700;letter-spacing:0.04em;text-transform:uppercase;color:var(--muted)}
+.chart-wrap{position:relative;height:180px}
+.form-card{background:var(--surface2);border:1px solid var(--border);border-radius:16px;padding:20px;margin-bottom:16px}
+.form-title{font-family:'Unbounded',sans-serif;font-size:0.75rem;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:var(--muted);margin-bottom:14px}
+.form-row{display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap}
+.form-row>*{flex:1;min-width:120px}
+input,select,textarea{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:11px 14px;font-family:'Plus Jakarta Sans',sans-serif;font-size:13px;color:var(--text);outline:none;transition:border-color 0.2s;width:100%}
+input::placeholder,textarea::placeholder{color:var(--muted)}
+input:focus,select:focus,textarea:focus{border-color:rgba(255,255,255,0.2)}
+select option{background:#0f1523}
+.type-row{display:flex;gap:8px;margin-bottom:12px}
+.type-pill{flex:1;padding:9px;border-radius:10px;border:1px solid var(--border);background:transparent;font-family:'Plus Jakarta Sans',sans-serif;font-size:13px;font-weight:600;cursor:pointer;transition:all 0.2s;color:var(--muted)}
+.type-pill.sel-inc{border-color:var(--c3);background:var(--c3g);color:var(--c3)}
+.type-pill.sel-exp{border-color:var(--c2);background:var(--c2g);color:var(--c2)}
+.add-btn{width:100%;padding:13px;border-radius:12px;border:none;font-family:'Unbounded',sans-serif;font-size:13px;font-weight:700;cursor:pointer;transition:all 0.2s;margin-top:4px}
+.add-btn:hover{opacity:0.85;transform:translateY(-1px)}
+.btn-green{background:var(--c3);color:#000}.btn-orange{background:var(--c4);color:#000}
+.btn-blue{background:var(--c1);color:#fff}.btn-purple{background:var(--c5);color:#fff}.btn-red{background:var(--c2);color:#fff}
+.log-list{display:flex;flex-direction:column;gap:8px;max-height:300px;overflow-y:auto}
+.log-item{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px 16px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.log-left{flex:1;min-width:0}
+.log-name{font-weight:600;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.log-meta{font-size:11px;color:var(--muted);margin-top:2px}
+.log-val{font-family:'Unbounded',sans-serif;font-size:0.9rem;font-weight:700;flex-shrink:0}
+.val-green{color:var(--c3)}.val-red{color:var(--c2)}
+.del-btn{background:none;border:none;color:var(--muted);cursor:pointer;font-size:14px;padding:4px;border-radius:6px;transition:all 0.2s;flex-shrink:0}
+.del-btn:hover{color:var(--c2);background:var(--c2g)}
+.empty-msg{text-align:center;padding:28px;color:var(--muted);font-size:13px}
+.empty-msg .ei{font-size:28px;margin-bottom:8px}
+.tag{display:inline-block;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:600}
+.tag-b{background:rgba(255,179,64,0.15);color:var(--c4)}.tag-l{background:rgba(0,229,160,0.15);color:var(--c3)}
+.tag-d{background:rgba(79,142,255,0.15);color:var(--c1)}.tag-s{background:rgba(255,95,126,0.15);color:var(--c2)}
+.routine-item{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px 16px;display:flex;align-items:center;gap:12px}
+.routine-item.done-item{opacity:0.5}
+.check-btn{width:26px;height:26px;border-radius:50%;border:2px solid var(--border);background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:13px;transition:all 0.2s;flex-shrink:0;color:transparent}
+.check-btn.checked{background:var(--c1);border-color:var(--c1);color:white}
+.ri-name{font-weight:600;font-size:13px;flex:1}.ri-name.done-text{text-decoration:line-through}
+.ri-time{font-size:11px;color:var(--muted)}
+.prog-bar{background:var(--surface2);border-radius:100px;height:6px;overflow:hidden;margin-top:8px}
+.prog-fill{height:100%;border-radius:100px;transition:width 0.5s ease}
+.subject-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:16px}
+.subject-card .sub-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px}
+.subject-card .sub-name{font-weight:700;font-size:14px}
+.subject-card .sub-code{font-size:11px;color:var(--muted);margin-top:2px}
+.subject-card .sub-pct{font-family:'Unbounded',sans-serif;font-size:1.2rem;font-weight:800}
+.zone-safe{color:var(--c3)}.zone-watch{color:var(--c4)}.zone-danger{color:var(--c2)}.zone-critical{color:#ff3333}
+.zone-badge{display:inline-block;padding:3px 10px;border-radius:8px;font-size:11px;font-weight:700;margin-top:8px}
+.zb-safe{background:rgba(0,229,160,0.12);color:var(--c3)}.zb-watch{background:rgba(255,179,64,0.12);color:var(--c4)}
+.zb-danger{background:rgba(255,95,126,0.12);color:var(--c2)}.zb-critical{background:rgba(255,51,51,0.12);color:#ff3333}
+.att-row{display:flex;justify-content:space-between;font-size:12px;color:var(--muted);margin-top:8px}
+.goal-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:18px;margin-bottom:10px}
+.goal-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px}
+.goal-title{font-weight:700;font-size:14px}.goal-cat{font-size:11px;color:var(--muted);margin-top:2px}
+.goal-pct{font-family:'Unbounded',sans-serif;font-size:1.1rem;font-weight:800;color:var(--c5)}
+.att-badges{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px}
+.att-badge{padding:6px 12px;border-radius:10px;font-size:12px;font-weight:600;border:1px solid transparent}
+.sec-label{font-family:'Unbounded',sans-serif;font-size:0.7rem;font-weight:700;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);margin-bottom:10px;margin-top:4px}
+.subjects-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="header">
+    <div class="header-brand"><h1><span>SUDARSHAN'S</span> DASHBOARD</h1></div>
+    <div class="time-display" id="timeLive">Loading...</div>
+  </div>
+
+  <div id="loginSection" class="login-banner">
+    <h2>Welcome Back 👋</h2>
+    <p>Sign in with Google to sync your data across all devices</p>
+    <button class="btn-google" onclick="signIn()">
+      <svg width="18" height="18" viewBox="0 0 18 18"><path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.874 2.684-6.615z"/><path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.184l-2.908-2.258c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z"/><path fill="#FBBC05" d="M3.964 10.707A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.707V4.961H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.039l3.007-2.332z"/><path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.961L3.964 6.293C4.672 4.166 6.656 3.58 9 3.58z"/></svg>
+      Sign in with Google
+    </button>
+  </div>
+
+  <div id="mainApp" style="display:none">
+    <div class="user-bar">
+      <span>Signed in as <strong id="userName"></strong></span>
+      <button class="btn-signout" onclick="doSignOut()">Sign Out</button>
+    </div>
+
+    <div class="score-banner">
+      <div class="score-left">
+        <h2>Today's Life Score</h2>
+        <div class="day-score" id="dayScore">0</div>
+        <div style="font-size:12px;color:var(--muted);margin-top:4px" id="scoreMsg">Complete tasks to build your score</div>
+      </div>
+      <div class="score-breakdown">
+        <div class="score-item"><div class="si-val" id="s-money" style="color:var(--c3)">0/20</div><div class="si-label">💰 Money</div></div>
+        <div class="score-item"><div class="si-val" id="s-food" style="color:var(--c4)">0/21</div><div class="si-label">🍱 Food</div></div>
+        <div class="score-item"><div class="si-val" id="s-routine" style="color:var(--c1)">0/40</div><div class="si-label">✅ Routine</div></div>
+        <div class="score-item"><div class="si-val" id="s-goals" style="color:var(--c5)">0/19</div><div class="si-label">🎯 Goals</div></div>
+      </div>
+    </div>
+
+    <div class="nav">
+      <button class="nav-btn active" data-tab="money" onclick="switchTab('money',this)">💰 Money</button>
+      <button class="nav-btn" data-tab="food" onclick="switchTab('food',this)">🍱 Food</button>
+      <button class="nav-btn" data-tab="routine" onclick="switchTab('routine',this)">✅ Routine</button>
+      <button class="nav-btn" data-tab="study" onclick="switchTab('study',this)">📚 Study</button>
+      <button class="nav-btn" data-tab="goals" onclick="switchTab('goals',this)">🎯 Goals</button>
+    </div>
+    <!-- MONEY -->
+    <div class="panel active" id="panel-money">
+      <div class="grid-4">
+        <div class="stat-card c-green"><div class="sc-label">Income</div><div class="sc-val" id="m-income">₹0</div></div>
+        <div class="stat-card c-red"><div class="sc-label">Spent</div><div class="sc-val" id="m-expense">₹0</div></div>
+        <div class="stat-card c-blue"><div class="sc-label">Balance</div><div class="sc-val" id="m-balance">₹0</div></div>
+        <div class="stat-card c-orange"><div class="sc-label">Saved</div><div class="sc-val" id="m-saved">₹0</div><div class="sc-sub" id="m-saved-pct">of income</div></div>
+      </div>
+      <div class="full-card"><div class="fc-header"><div class="fc-title">📊 Spending Breakdown</div></div><div class="chart-wrap"><canvas id="spendChart"></canvas></div></div>
+      <div class="form-card">
+        <div class="form-title">➕ Add Entry</div>
+        <div class="type-row">
+          <button class="type-pill sel-inc" id="btnInc" onclick="selType('income')">⬆ Income</button>
+          <button class="type-pill" id="btnExp" onclick="selType('expense')">⬇ Expense</button>
+        </div>
+        <div class="form-row">
+          <input type="text" id="mDesc" placeholder="Description (e.g. Canteen, Pocket money)"/>
+          <input type="number" id="mAmt" placeholder="Amount ₹" style="max-width:130px"/>
+        </div>
+        <div class="form-row">
+          <select id="mCat"><option>Food</option><option>Transport</option><option>Stationery</option><option>Entertainment</option><option>Pocket Money</option><option>Freelance</option><option>Business</option><option>Other</option></select>
+        </div>
+        <button class="add-btn btn-green" onclick="addMoney()">Add Entry</button>
+      </div>
+      <div class="sec-label">Today's Log</div>
+      <div class="log-list" id="moneyLog"><div class="empty-msg"><div class="ei">💸</div>No entries yet</div></div>
+    </div>
+
+    <!-- FOOD -->
+    <div class="panel" id="panel-food">
+      <div class="grid-3">
+        <div class="stat-card c-orange"><div class="sc-label">Calories</div><div class="sc-val" id="f-cal">0</div><div class="sc-sub">/ 2000 kcal</div></div>
+        <div class="stat-card c-blue"><div class="sc-label">Protein</div><div class="sc-val" id="f-prot">0g</div><div class="sc-sub">/ 60g goal</div></div>
+        <div class="stat-card c-green"><div class="sc-label">Meals</div><div class="sc-val" id="f-meals">0</div><div class="sc-sub">today</div></div>
+      </div>
+      <div class="full-card">
+        <div class="fc-header"><div class="fc-title">📊 Calorie Progress</div></div>
+        <div class="prog-bar" style="height:12px;margin-top:0"><div class="prog-fill" id="calBar" style="width:0%;background:linear-gradient(90deg,var(--c4),var(--c2))"></div></div>
+        <div style="display:flex;justify-content:space-between;margin-top:8px;font-size:12px;color:var(--muted)"><span id="calBarLabel">0 kcal consumed</span><span>2000 kcal goal</span></div>
+      </div>
+      <div class="form-card">
+        <div class="form-title">🍽 Log Meal</div>
+        <div class="form-row">
+          <select id="fMeal"><option value="b">☀️ Breakfast</option><option value="l">🌤 Lunch</option><option value="d">🌙 Dinner</option><option value="s">🍫 Snack</option></select>
+          <input type="text" id="fName" placeholder="What did you eat?"/>
+        </div>
+        <div class="form-row">
+          <input type="number" id="fCal" placeholder="Calories (kcal)"/>
+          <input type="number" id="fProt" placeholder="Protein (g)"/>
+        </div>
+        <button class="add-btn btn-orange" onclick="addFood()">Log Meal</button>
+      </div>
+      <div class="sec-label">Today's Meals</div>
+      <div class="log-list" id="foodLog"><div class="empty-msg"><div class="ei">🍱</div>No meals logged</div></div>
+    </div>
+
+    <!-- ROUTINE -->
+    <div class="panel" id="panel-routine">
+      <div class="full-card">
+        <div class="fc-header">
+          <div class="fc-title">⚡ Day Completion</div>
+          <div style="font-family:'Unbounded',sans-serif;font-size:1.3rem;font-weight:800;color:var(--c1)" id="routPct">0%</div>
+        </div>
+        <div class="prog-bar"><div class="prog-fill" id="routBar" style="width:0%;background:linear-gradient(90deg,var(--c1),var(--c5))"></div></div>
+        <div style="font-size:12px;color:var(--muted);margin-top:8px" id="routMsg">Add tasks and start checking them off</div>
+      </div>
+      <div class="full-card">
+        <div class="fc-header"><div class="fc-title">🎓 Attendance Status</div></div>
+        <div class="att-badges" id="attBadges"></div>
+        <div style="font-size:12px;color:var(--muted)">Target: 50% minimum · Update after each class</div>
+      </div>
+      <div class="form-card">
+        <div class="form-title">➕ Add Task</div>
+        <div class="form-row">
+          <input type="text" id="tName" placeholder="Task (e.g. Attend FM, Study KDM, Gym)"/>
+          <input type="time" id="tTime" style="max-width:120px"/>
+        </div>
+        <select id="tCat" style="margin-bottom:10px"><option value="study">📚 Study</option><option value="health">💪 Health</option><option value="college">🎓 College</option><option value="business">🔧 Business</option><option value="personal">🌱 Personal</option></select>
+        <button class="add-btn btn-blue" onclick="addTask()">Add Task</button>
+      </div>
+      <div class="sec-label">Today's Tasks</div>
+      <div class="log-list" id="routLog" style="max-height:400px"><div class="empty-msg"><div class="ei">✅</div>No tasks yet</div></div>
+    </div>
+
+    <!-- STUDY -->
+    <div class="panel" id="panel-study">
+      <div class="grid-2" style="margin-bottom:16px">
+        <div class="stat-card c-purple"><div class="sc-label">Est. CGPA</div><div class="sc-val" id="est-cgpa">--</div><div class="sc-sub">Target: 7.0+</div></div>
+        <div class="stat-card c-red"><div class="sc-label">At Risk</div><div class="sc-val" id="at-risk">--</div><div class="sc-sub">subjects need focus</div></div>
+      </div>
+      <div class="sec-label">Your Subjects — SY2 S4</div>
+      <div class="subjects-grid" id="subjectsGrid"></div>
+      <div class="form-card">
+        <div class="form-title">📝 Update Marks</div>
+        <div class="form-row">
+          <select id="subSelect" style="flex:2"></select>
+          <input type="number" id="subScored" placeholder="Scored"/>
+          <input type="number" id="subTotal" placeholder="Out of"/>
+        </div>
+        <select id="examType" style="margin-bottom:10px"><option>Midterm</option><option>Unit Test</option><option>Assignment</option><option>Practical</option><option>End Sem</option></select>
+        <button class="add-btn btn-purple" onclick="addMark()">Update Marks</button>
+      </div>
+      <div class="full-card">
+        <div class="fc-header"><div class="fc-title">📊 Subject Performance</div></div>
+        <div class="chart-wrap"><canvas id="studyChart"></canvas></div>
+      </div>
+    </div>
+
+    <!-- GOALS -->
+    <div class="panel" id="panel-goals">
+      <div class="grid-2">
+        <div class="stat-card c-purple"><div class="sc-label">Active Goals</div><div class="sc-val" id="g-active">0</div></div>
+        <div class="stat-card c-green"><div class="sc-label">Completed</div><div class="sc-val" id="g-done">0</div></div>
+      </div>
+      <div class="form-card">
+        <div class="form-title">🎯 Add New Goal</div>
+        <div class="form-row"><input type="text" id="gTitle" placeholder="Goal (e.g. CGPA above 7, Save ₹5000)"/></div>
+        <div class="form-row">
+          <select id="gCat"><option>📚 Academic</option><option>💰 Finance</option><option>💪 Health</option><option>🔧 Business</option><option>🌱 Personal</option><option>💻 Skills</option></select>
+          <input type="date" id="gDeadline"/>
+        </div>
+        <div class="form-row"><input type="number" id="gProgress" placeholder="Current progress %" min="0" max="100"/></div>
+        <button class="add-btn btn-red" onclick="addGoal()">Add Goal</button>
+      </div>
+      <div class="sec-label">Your Goals</div>
+      <div id="goalsList"><div class="empty-msg"><div class="ei">🎯</div>No goals set yet</div></div>
+    </div>
+
+  </div><!-- end mainApp -->
+
+  <!-- FOOTER -->
+  <div style="text-align:center;padding:32px 0 16px;border-top:1px solid var(--border);margin-top:40px;">
+    <div style="font-family:'Unbounded',sans-serif;font-size:0.65rem;font-weight:700;letter-spacing:0.12em;text-transform:uppercase;color:var(--muted);margin-bottom:6px;">Life OS · Personal Dashboard</div>
+    <div style="font-size:12px;color:var(--muted);opacity:0.6;">Designed & built by <a href="https://github.com/Sudarshan-0301" target="_blank" style="color:var(--c1);text-decoration:none;font-weight:600;">Sudarshan Kale</a> · <a href="https://github.com/Sudarshan-0301/life-dashboard" target="_blank" style="color:var(--c1);text-decoration:none;font-weight:600;">GitHub</a></div>
+  </div>
+
+</div><!-- end app -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-app.js";
+import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-auth.js";
+import { getDatabase, ref, set, onValue } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-database.js";
+
+const app = initializeApp({
+  apiKey:"AIzaSyBmEkbho4Dugkb8czvRB52Q-RUzjLL3Ry4",
+  authDomain:"sudarshan-life-dashboard.firebaseapp.com",
+  projectId:"sudarshan-life-dashboard",
+  storageBucket:"sudarshan-life-dashboard.firebasestorage.app",
+  messagingSenderId:"1073446872543",
+  appId:"1:1073446872543:web:2c914bcc96f60a5e8f906a",
+  databaseURL:"https://sudarshan-life-dashboard-default-rtdb.asia-southeast1.firebasedatabase.app"
+});
+
+const auth = getAuth(app);
+const db = getDatabase(app);
+let uid = null;
+
+const defaultState = () => ({
+  money:[], food:[], routine:[], goals:[], moneyType:'income',
+  lastDay: new Date().toDateString(),
+  attendance:{FM:{attended:5,total:17},KDM:{attended:9,total:21},EMA:{attended:7,total:21},'M&M':{attended:6,total:22},EM:{attended:11,total:23},SCIL:{attended:9,total:21}},
+  subjects:[
+    {code:'23MEC2206',name:'Fluid Mechanics',short:'FM',credits:4,marks:[{scored:7.5,total:30,type:'Midterm'}]},
+    {code:'23MEC2207',name:'Kinematics & Dynamics',short:'KDM',credits:4,marks:[{scored:15,total:30,type:'Midterm'}]},
+    {code:'23MEC2208',name:'Engg Materials',short:'EMA',credits:3,marks:[{scored:7.5,total:30,type:'Midterm'}]},
+    {code:'23MEC2209',name:'Measurement & Metrology',short:'M&M',credits:3,marks:[{scored:11,total:30,type:'Midterm'}]},
+    {code:'23MEC2210',name:'Electrical Machines',short:'EM',credits:3,marks:[{scored:12,total:30,type:'Midterm'}]},
+    {code:'23SCL2001',name:'Aptitude & Prof Skills',short:'SCIL',credits:2,marks:[]}
+  ]
+});
+
+let S = defaultState();
+
+function save(){ if(uid) set(ref(db,'users/'+uid+'/dashboard'), S); }
+
+function loadData(){
+  onValue(ref(db,'users/'+uid+'/dashboard'), snap => {
+    const d = snap.val();
+    if(d){
+      S = {...defaultState(), ...d};
+      if(!d.subjects) S.subjects = defaultState().subjects;
+      if(!d.attendance) S.attendance = defaultState().attendance;
+      // Reset daily logs if new day
+      const today = new Date().toDateString();
+      if(S.lastDay !== today){ S.money=[]; S.food=[]; S.routine=S.routine.map(t=>({...t,done:false})); S.lastDay=today; save(); }
+    }
+    renderAll();
+  });
+}
+
+window.signIn = async()=>{ try{ await signInWithPopup(auth,new GoogleAuthProvider()); }catch(e){ alert('Sign in failed: '+e.message); }};
+window.doSignOut = ()=> signOut(auth);
+
+onAuthStateChanged(auth, user => {
+  if(user){
+    uid = user.uid;
+    document.getElementById('loginSection').style.display='none';
+    document.getElementById('mainApp').style.display='block';
+    document.getElementById('userName').textContent=user.displayName;
+    loadData();
+  } else {
+    uid=null;
+    document.getElementById('loginSection').style.display='block';
+    document.getElementById('mainApp').style.display='none';
+  }
+});
+
+// TIME
+function updateTime(){
+  const now=new Date();
+  document.getElementById('timeLive').innerHTML=now.toLocaleDateString('en-IN',{weekday:'short',day:'numeric',month:'short'})+' &nbsp;<span>'+now.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',second:'2-digit'})+'</span>';
+}
+updateTime(); setInterval(updateTime,1000);
+
+// TABS
+window.switchTab = function(tab,el){
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('panel-'+tab).classList.add('active');
+  el.classList.add('active');
+  if(tab==='study'){renderStudy();setTimeout(renderStudyChart,100);}
+  if(tab==='money')setTimeout(renderSpendChart,100);
+};
+
+// SCORE
+function calcScore(){
+  const done=S.routine.filter(t=>t.done).length, total=S.routine.length;
+  const r=total>0?Math.round((done/total)*40):0, m=S.money.length>0?20:0, f=Math.min(S.food.length,3)*7, g=S.goals.length>0?19:0;
+  const score=r+m+f+g;
+  document.getElementById('dayScore').textContent=score;
+  document.getElementById('s-money').textContent=m+'/20';
+  document.getElementById('s-food').textContent=f+'/21';
+  document.getElementById('s-routine').textContent=r+'/40';
+  document.getElementById('s-goals').textContent=g+'/19';
+  const msgs=['Just getting started!','Good start, keep going!','Solid day, push further!','Great day! Almost there!','Perfect day! You crushed it! 🔥'];
+  document.getElementById('scoreMsg').textContent=msgs[Math.min(Math.floor(score/20),4)];
+}
+// MONEY
+window.selType=t=>{ S.moneyType=t; document.getElementById('btnInc').className='type-pill'+(t==='income'?' sel-inc':''); document.getElementById('btnExp').className='type-pill'+(t==='expense'?' sel-exp':''); };
+window.addMoney=function(){
+  const desc=document.getElementById('mDesc').value.trim(), amt=parseFloat(document.getElementById('mAmt').value), cat=document.getElementById('mCat').value;
+  if(!desc||!amt||amt<=0)return alert('Fill description and amount');
+  S.money.push({id:Date.now(),desc,amt,cat,type:S.moneyType,time:new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'})});
+  document.getElementById('mDesc').value=''; document.getElementById('mAmt').value='';
+  save(); renderMoney(); calcScore();
+};
+window.deleteMoney=id=>{ S.money=S.money.filter(m=>m.id!==id); save(); renderMoney(); calcScore(); };
+let spendChart;
+function renderSpendChart(){
+  const cats={};
+  S.money.filter(m=>m.type==='expense').forEach(m=>{ cats[m.cat]=(cats[m.cat]||0)+m.amt; });
+  const labels=Object.keys(cats),data=Object.values(cats);
+  const ctx=document.getElementById('spendChart').getContext('2d');
+  if(spendChart)spendChart.destroy();
+  if(!labels.length)return;
+  spendChart=new Chart(ctx,{type:'doughnut',data:{labels,datasets:[{data,backgroundColor:['#4f8eff','#ff5f7e','#00e5a0','#ffb340','#bf7fff','#ff9940','#40e0ff'].slice(0,labels.length),borderWidth:0}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'right',labels:{color:'#5a6480',font:{size:11},boxWidth:12}}}}});
+}
+function renderMoney(){
+  const inc=S.money.filter(m=>m.type==='income').reduce((s,m)=>s+m.amt,0);
+  const exp=S.money.filter(m=>m.type==='expense').reduce((s,m)=>s+m.amt,0);
+  const bal=inc-exp;
+  document.getElementById('m-income').textContent='₹'+inc.toFixed(0);
+  document.getElementById('m-expense').textContent='₹'+exp.toFixed(0);
+  document.getElementById('m-balance').textContent=(bal>=0?'+':'')+'₹'+bal.toFixed(0);
+  document.getElementById('m-balance').style.color=bal>=0?'var(--c3)':'var(--c2)';
+  document.getElementById('m-saved').textContent='₹'+Math.max(0,bal).toFixed(0);
+  document.getElementById('m-saved-pct').textContent=inc>0?Math.round((bal/inc)*100)+'% of income':'start saving!';
+  const log=document.getElementById('moneyLog');
+  if(!S.money.length){log.innerHTML='<div class="empty-msg"><div class="ei">💸</div>No entries yet</div>';return;}
+  log.innerHTML=[...S.money].reverse().map(m=>'<div class="log-item"><div class="log-left"><div class="log-name">'+m.desc+'</div><div class="log-meta">'+m.cat+' · '+m.time+'</div></div><div class="log-val '+(m.type==='income'?'val-green':'val-red')+'">'+(m.type==='income'?'+':'-')+'₹'+m.amt+'</div><button class="del-btn" onclick="deleteMoney('+m.id+')">✕</button></div>').join('');
+  renderSpendChart();
+}
+
+// FOOD
+const mealTags={b:'tag-b',l:'tag-l',d:'tag-d',s:'tag-s'}, mealNames={b:'☀️ Breakfast',l:'🌤 Lunch',d:'🌙 Dinner',s:'🍫 Snack'};
+window.addFood=function(){
+  const name=document.getElementById('fName').value.trim(), cal=parseInt(document.getElementById('fCal').value)||0, prot=parseInt(document.getElementById('fProt').value)||0, meal=document.getElementById('fMeal').value;
+  if(!name)return alert('Enter what you ate');
+  S.food.push({id:Date.now(),name,cal,prot,meal,time:new Date().toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'})});
+  document.getElementById('fName').value=''; document.getElementById('fCal').value=''; document.getElementById('fProt').value='';
+  save(); renderFood(); calcScore();
+};
+window.deleteFood=id=>{ S.food=S.food.filter(f=>f.id!==id); save(); renderFood(); calcScore(); };
+function renderFood(){
+  const cal=S.food.reduce((s,f)=>s+f.cal,0), prot=S.food.reduce((s,f)=>s+f.prot,0);
+  document.getElementById('f-cal').textContent=cal;
+  document.getElementById('f-prot').textContent=prot+'g';
+  document.getElementById('f-meals').textContent=S.food.length;
+  document.getElementById('calBar').style.width=Math.min((cal/2000)*100,100)+'%';
+  document.getElementById('calBarLabel').textContent=cal+' kcal consumed';
+  const log=document.getElementById('foodLog');
+  if(!S.food.length){log.innerHTML='<div class="empty-msg"><div class="ei">🍱</div>No meals logged</div>';return;}
+  log.innerHTML=[...S.food].reverse().map(f=>'<div class="log-item"><div class="log-left"><div class="log-name">'+f.name+'</div><div class="log-meta" style="display:flex;gap:8px;align-items:center;margin-top:4px"><span class="tag '+mealTags[f.meal]+'">'+mealNames[f.meal]+'</span>'+(f.cal?'<span>'+f.cal+'kcal</span>':'')+(f.prot?'<span>'+f.prot+'g protein</span>':'')+'</div></div><button class="del-btn" onclick="deleteFood('+f.id+')">✕</button></div>').join('');
+}
+
+// ROUTINE
+const catIcons={study:'📚',health:'💪',college:'🎓',business:'🔧',personal:'🌱'};
+window.addTask=function(){
+  const name=document.getElementById('tName').value.trim(), time=document.getElementById('tTime').value, cat=document.getElementById('tCat').value;
+  if(!name)return alert('Enter task name');
+  S.routine.push({id:Date.now(),name,time,cat,done:false});
+  document.getElementById('tName').value=''; document.getElementById('tTime').value='';
+  save(); renderRoutine(); calcScore();
+};
+window.toggleTask=id=>{ S.routine=S.routine.map(t=>t.id===id?{...t,done:!t.done}:t); save(); renderRoutine(); calcScore(); };
+window.deleteTask=id=>{ S.routine=S.routine.filter(t=>t.id!==id); save(); renderRoutine(); calcScore(); };
+function renderRoutine(){
+  const total=S.routine.length, done=S.routine.filter(t=>t.done).length, pct=total>0?Math.round((done/total)*100):0;
+  document.getElementById('routPct').textContent=pct+'%';
+  document.getElementById('routBar').style.width=pct+'%';
+  document.getElementById('routMsg').textContent=total>0?done+' of '+total+' tasks done today':'Add tasks to start your day';
+  document.getElementById('attBadges').innerHTML=Object.entries(S.attendance).map(([s,{attended:a,total:t}])=>{
+    const p=Math.round((a/t)*100), col=p>=50?'var(--c3)':p>=40?'var(--c4)':'var(--c2)', bg=p>=50?'rgba(0,229,160,0.1)':p>=40?'rgba(255,179,64,0.1)':'rgba(255,95,126,0.1)';
+    return '<div class="att-badge" style="background:'+bg+';color:'+col+';border-color:'+col+'40">'+s+': '+p+'% ('+a+'/'+t+')</div>';
+  }).join('');
+  const log=document.getElementById('routLog');
+  if(!S.routine.length){log.innerHTML='<div class="empty-msg"><div class="ei">✅</div>No tasks yet</div>';return;}
+  log.innerHTML=[...S.routine].sort((a,b)=>a.done-b.done).map(t=>'<div class="routine-item '+(t.done?'done-item':'')+'"><button class="check-btn '+(t.done?'checked':'')+'" onclick="toggleTask('+t.id+')">'+(t.done?'✓':'')+'</button><div style="flex:1"><div class="ri-name '+(t.done?'done-text':'')+'">'+catIcons[t.cat]+' '+t.name+'</div>'+(t.time?'<div class="ri-time">⏰ '+t.time+'</div>':'')+'</div><button class="del-btn" onclick="deleteTask('+t.id+')">✕</button></div>').join('');
+}
+// STUDY
+function getAvg(marks){ if(!marks||!marks.length)return null; return Math.round(marks.reduce((s,m)=>s+(m.scored/m.total)*100,0)/marks.length); }
+function getZone(p){ if(p===null)return{label:'No Data',cls:'zb-watch',tcls:'zone-watch'}; if(p>=60)return{label:'🟢 Safe',cls:'zb-safe',tcls:'zone-safe'}; if(p>=45)return{label:'🟡 Watch',cls:'zb-watch',tcls:'zone-watch'}; if(p>=30)return{label:'🔴 Danger',cls:'zb-danger',tcls:'zone-danger'}; return{label:'⚫ Critical',cls:'zb-critical',tcls:'zone-critical'}; }
+function renderStudy(){
+  const grid=document.getElementById('subjectsGrid');
+  grid.innerHTML=S.subjects.map(sub=>{
+    const avg=getAvg(sub.marks), zone=getZone(avg), att=S.attendance[sub.short], ap=att?Math.round((att.attended/att.total)*100):null;
+    return '<div class="subject-card"><div class="sub-header"><div><div class="sub-name">'+sub.short+'</div><div class="sub-code">'+sub.name+'</div></div><div class="sub-pct '+zone.tcls+'">'+(avg!==null?avg+'%':'--')+'</div></div><div class="prog-bar"><div class="prog-fill" style="width:'+(avg||0)+'%;background:'+(avg>=60?'var(--c3)':avg>=45?'var(--c4)':'var(--c2)')+'"></div></div><div class="att-row"><span>Attendance: '+(ap!==null?ap+'%':'--')+'</span><span>'+(att?att.attended+'/'+att.total+' classes':'')+'</span></div><div class="zone-badge '+zone.cls+'">'+zone.label+'</div></div>';
+  }).join('');
+  document.getElementById('subSelect').innerHTML=S.subjects.map(s=>'<option value="'+s.short+'">'+s.short+' — '+s.name+'</option>').join('');
+  document.getElementById('at-risk').textContent=S.subjects.filter(s=>{const a=getAvg(s.marks);return a!==null&&a<45;}).length;
+  let tc=0,tp=0;
+  S.subjects.forEach(sub=>{ const avg=getAvg(sub.marks); if(avg!==null){ const gp=avg>=90?10:avg>=80?9:avg>=70?8:avg>=60?7:avg>=50?6:avg>=40?5:4; tp+=gp*sub.credits; tc+=sub.credits; } });
+  document.getElementById('est-cgpa').textContent=tc>0?(tp/tc).toFixed(2):'--';
+}
+window.addMark=function(){
+  const short=document.getElementById('subSelect').value, scored=parseFloat(document.getElementById('subScored').value), total=parseFloat(document.getElementById('subTotal').value), type=document.getElementById('examType').value;
+  if(!scored||!total||scored>total)return alert('Enter valid marks');
+  const sub=S.subjects.find(s=>s.short===short);
+  if(sub)sub.marks.push({scored,total,type,date:new Date().toLocaleDateString()});
+  document.getElementById('subScored').value=''; document.getElementById('subTotal').value='';
+  save(); renderStudy(); setTimeout(renderStudyChart,100);
+};
+let studyChart;
+function renderStudyChart(){
+  const ctx=document.getElementById('studyChart').getContext('2d');
+  if(studyChart)studyChart.destroy();
+  const labels=S.subjects.map(s=>s.short), data=S.subjects.map(s=>getAvg(s.marks)||0);
+  studyChart=new Chart(ctx,{type:'bar',data:{labels,datasets:[{label:'Score %',data,backgroundColor:data.map(d=>d>=60?'rgba(0,229,160,0.8)':d>=45?'rgba(255,179,64,0.8)':'rgba(255,95,126,0.8)'),borderRadius:8,borderWidth:0}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,max:100,grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#5a6480',font:{size:11}}},x:{grid:{display:false},ticks:{color:'#5a6480',font:{size:11,weight:'600'}}}}}});
+}
+
+// GOALS
+window.addGoal=function(){
+  const title=document.getElementById('gTitle').value.trim(), cat=document.getElementById('gCat').value, deadline=document.getElementById('gDeadline').value, progress=parseInt(document.getElementById('gProgress').value)||0;
+  if(!title)return alert('Enter a goal');
+  S.goals.push({id:Date.now(),title,cat,deadline,progress:Math.min(100,progress),done:progress>=100});
+  document.getElementById('gTitle').value=''; document.getElementById('gDeadline').value=''; document.getElementById('gProgress').value='';
+  save(); renderGoals(); calcScore();
+};
+window.updateGoalProgress=(id,val)=>{ S.goals=S.goals.map(g=>g.id===id?{...g,progress:parseInt(val),done:parseInt(val)>=100}:g); save(); renderGoals(); };
+window.deleteGoal=id=>{ S.goals=S.goals.filter(g=>g.id!==id); save(); renderGoals(); calcScore(); };
+function renderGoals(){
+  document.getElementById('g-active').textContent=S.goals.filter(g=>!g.done).length;
+  document.getElementById('g-done').textContent=S.goals.filter(g=>g.done).length;
+  const list=document.getElementById('goalsList');
+  if(!S.goals.length){list.innerHTML='<div class="empty-msg"><div class="ei">🎯</div>No goals set yet</div>';return;}
+  list.innerHTML=[...S.goals].sort((a,b)=>a.done-b.done).map(g=>'<div class="goal-card"><div class="goal-header"><div><div class="goal-title" style="'+(g.done?'text-decoration:line-through;opacity:0.5':'')+'">'+g.title+'</div><div class="goal-cat">'+g.cat+'</div></div><div style="display:flex;align-items:center;gap:10px"><div class="goal-pct">'+g.progress+'%</div><button class="del-btn" onclick="deleteGoal('+g.id+')">✕</button></div></div><div class="prog-bar"><div class="prog-fill" style="width:'+g.progress+'%;background:linear-gradient(90deg,var(--c5),var(--c1))"></div></div><div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px"><div style="font-size:11px;color:var(--muted)">'+(g.deadline?'📅 '+new Date(g.deadline).toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'}):'')+' </div><input type="range" min="0" max="100" value="'+g.progress+'" oninput="updateGoalProgress('+g.id+',this.value)" style="width:120px;accent-color:var(--c5);cursor:pointer"/></div></div>').join('');
+}
+
+function renderAll(){ renderMoney(); renderFood(); renderRoutine(); renderGoals(); renderStudy(); setTimeout(renderStudyChart,200); setTimeout(renderSpendChart,200); calcScore(); }
+</script>
+</body>
+</html>
