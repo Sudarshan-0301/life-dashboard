@@ -10,18 +10,15 @@
     .logout { background: #ff5f7e; }
     input { padding: 12px; border-radius: 8px; border: 1px solid #333; background: #1a1a2e; color: white; font-size: 14px; width: 220px; margin: 6px; }
     select { padding: 12px; border-radius: 8px; border: 1px solid #333; background: #1a1a2e; color: white; font-size: 14px; margin: 6px; }
-    .item { background: #1a1a2e; border: 1px solid #222; border-radius: 8px; padding: 12px 16px; margin: 8px auto; max-width: 420px; display: flex; justify-content: space-between; align-items: center; }
+    .item { background: #1a1a2e; border: 1px solid #222; border-radius: 8px; padding: 12px 16px; margin: 8px auto; max-width: 420px; display: flex; justify-content: space-between; }
     #total { font-size: 18px; color: #00e5a0; margin: 16px 0; font-weight: bold; }
     #user-info { color: #888; font-size: 13px; margin-bottom: 16px; }
-    #login-section { display: block; }
-    #app-section { display: none; }
-    #loading { color: #888; font-size: 14px; }
     .inc { color: #00e5a0; }
     .exp { color: #ff5f7e; }
   </style>
 </head>
 <body>
-  <div id="loading">Loading...</div>
+  <div id="loading"><p>Loading...</p></div>
   <div id="login-section" style="display:none">
     <h1>Sudarshan Life Dashboard</h1>
     <p>Sign in with Google to sync your data across all devices</p>
@@ -43,10 +40,9 @@
     <button onclick="addEntry()">Add Entry</button>
     <div id="total">Balance: Rs.0</div>
     <div id="list"></div>
-  </div>
-  <script type="module">
+  </div>  <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-app.js";
-    import { getAuth, GoogleAuthProvider, signInWithRedirect, getRedirectResult, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-auth.js";
+    import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-auth.js";
     import { getDatabase, ref, push, onValue } from "https://www.gstatic.com/firebasejs/12.11.0/firebase-database.js";
 
     const app = initializeApp({
@@ -64,17 +60,17 @@
     const provider = new GoogleAuthProvider();
     let user = null;
 
-    // Handle redirect result on page load
-    getRedirectResult(auth).then(result => {
-      if (result && result.user) {
-        console.log("Signed in via redirect:", result.user.displayName);
-      }
-    }).catch(err => {
-      console.error("Redirect error:", err);
-      document.getElementById('loading').textContent = 'Sign in error: ' + err.message;
-    });
+    // Set persistence so login survives page reload
+    setPersistence(auth, browserLocalPersistence);
 
-    window.signIn = () => signInWithRedirect(auth, provider);
+    window.signIn = async () => {
+      try {
+        await signInWithPopup(auth, provider);
+      } catch(e) {
+        alert('Sign in error: ' + e.message);
+      }
+    };
+
     window.doSignOut = () => signOut(auth);
 
     window.addEntry = () => {
@@ -110,7 +106,7 @@
           }
           const bal = income - expense;
           document.getElementById('total').textContent = 'Balance: Rs.' + bal + ' | Income: Rs.' + income + ' | Spent: Rs.' + expense;
-          document.getElementById('list').innerHTML = html || '<p style="color:#888">No entries yet. Add your first one!</p>';
+          document.getElementById('list').innerHTML = html || '<p style="color:#888">No entries yet!</p>';
         });
       } else {
         document.getElementById('login-section').style.display = 'block';
