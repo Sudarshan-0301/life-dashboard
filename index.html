@@ -323,7 +323,6 @@ function startDash(){
  });
 }
 function save(){if(uid&&S)set(ref(db,'users/'+uid+'/data'),S);}
-const MINFO={money:{icon:'$',label:'Money'},food:{icon:'f',label:'Food'},routine:{icon:'ok',label:'Habits'},study:{icon:'b',label:'Study'},work:{icon:'',label:'Work'},fitness:{icon:'g',label:'Fitness'},goals:{icon:'o',label:'Goals'},mood:{icon:'s',label:'Mood'}};
 const ICONS={
  money:`<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M16 8h-6a2 2 0 1 0 0 4h4a2 2 0 1 1 0 4H8"/><path d="M12 6v2m0 8v2"/></svg>`,
  food:`<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2"/><path d="M7 2v20"/><path d="M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3zm0 0v7"/></svg>`,
